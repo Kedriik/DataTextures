@@ -98,15 +98,36 @@ def generate_total_clouds_coverage(headers,datas):
     #image/=50
     return final_image
 
-def generate_temperature(header, data):
+def generate_temperature(headers, datas):
+    print("generate temperature entry")
+    debug_tmp_headers = {}
+    for header in headers:
+        for key in header.keys():
+            debug_tmp_headers[key] = []
+    for header in headers:
+        for key in header.keys():
+            debug_tmp_headers[key].append(header[key])
+    for i in range(len(headers)):
+        if headers[i]["surface1TypeName"] == "Ground or water surface":
+            print("Found ground or water surface")
+            header = headers[i]
+            data = datas[i]
+            break
+    #print(header)
+    #print(data)        
     image = []
     nx = header['nx']
     ny = header['ny']
     numberPoints = header['numberPoints']
+    #temperatures in K
+    #max temp in K recorded on Earth: 150
     for i  in range(numberPoints):
-        val = [-data[i],0,data[i]]
+        r = (math.cos((data[i]/255.0)*2*math.pi)+1)/2
+        b = (math.sin((data[i]/255.0)*2*math.pi)+1)/2
+        val = [r*255.0,0,b*255.0]
         for c in range(len(val)):
             image.append(val[c]);
+    print(nx,ny)
     return reshape_image(image, nx,ny)    
 
 Pi = 3.14159
@@ -184,7 +205,9 @@ if "UGRD" in header_dict.keys() and "VGRD" in header_dict.keys():
     cv2.imwrite(dirname+'\wind_directions.jpg', wind_dirs(header_dict["UGRD"][0],data_dict["UGRD"][0],data_dict["VGRD"][0]))
 if "TCDC" in header_dict.keys():
     cv2.imwrite(dirname+'\clouds_coverage.jpg', generate_total_clouds_coverage(header_dict["TCDC"],data_dict["TCDC"]))
+
 if "TMP" in header_dict.keys():
-    cv2.imwrite(dirname+'\temperature.jpg', generate_temperature(header_dict["TMP"],data_dict["TMP"]))
+    debug_tmp_image = generate_temperature(header_dict["TMP"],data_dict["TMP"])
+    cv2.imwrite(dirname+'/temperature.jpg', generate_temperature(header_dict["TMP"],data_dict["TMP"]))
 print("finished")
 
